@@ -7,8 +7,7 @@ SRC_DIR = src
 OBJ_DIR = obj
 INC_DIR = include
 
-SRCS = \
-	$(SRC_DIR)/main.c
+SRCS = $(wildcard $(SRC_DIR)/*.c)
 
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
