@@ -2,27 +2,25 @@
 
 
 char **parse_argv(char *argv){
-    static int argc = 0;
+    int argc = 0;
     char **res;
     int i = 0;
     while  (argv[i] != '\0'){
         if ( argv[i] != ' ' ){
-            while (argv[i] != ' '){
+            while ((argv[i] != ' ') && (argv[i] != '\0'))
                 i++;
-            }
             argc ++;
             
         }
-        if ( argv [i] == ' '){
-            while (argv[i] == ' '){
+        else {
+            while ((argv[i] == ' ') && (argv[i] != '\0'))
                 i ++;
-            }
-            
         }        
     }
-    //argc++;
+    
     printf("argc %d \n " ,argc);
-    res = malloc(sizeof(char  ) * argc);
+    res = malloc(sizeof(char  ) * (argc +1) );
+    if (!res)return NULL;
     
 
     return res;
