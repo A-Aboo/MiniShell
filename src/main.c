@@ -19,8 +19,14 @@ int	main(int argc, char **argv)
 		break;  
 		if (line[0] != '\0')
 		add_history(line); // store the line that is read and is accessiable with arrows 
+		char **c = parse_argv(line);
+		int i =0;
+		while (c[i]){
+			printf( "argv[%d]   %s \n " ,i,c[i]);
+			i++;
+		}
 
-		printf("You wrote: %s\n", line);
+		printf("\nYou wrote: %s\n", line);
 	
 		free(line);
 	}

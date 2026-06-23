@@ -22,7 +22,7 @@ char **parse_argv(char *line){
         }        
     }
     
-    printf("argc %d \n " ,argc);
+   // printf("argc %d \n " ,argc);
     res = malloc(sizeof(char  *) * (argc +1) );
     if (!res)return NULL;
     i  = 0 ;
