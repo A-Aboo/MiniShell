@@ -7,9 +7,8 @@ SRC_DIR = src
 OBJ_DIR = obj
 INC_DIR = include
 
-SRCS = $(wildcard $(SRC_DIR)/*.c)
-
-OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+SRCS := $(shell find $(SRC_DIR) -type f -name '*.c')
+OBJS := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 INCLUDES = -I$(INC_DIR)
 READLINE = -lreadline
@@ -20,7 +19,7 @@ $(NAME): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(READLINE) -o $(NAME)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	mkdir -p $(OBJ_DIR)
+	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
