@@ -56,4 +56,6 @@ void	execute_pipes(t_command *commands, char **env);
 int	apply_redirections(t_redir *redirections);
 void	setup_signals(void);
 int	builtin_echo(char **argv);
+int	builtin_env(char **env);
+int	builtin_pwd(void);
 #endif
