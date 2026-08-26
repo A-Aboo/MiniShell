@@ -49,4 +49,7 @@ void	print_command_error(char *command);
 void	print_permission_error(char *command);
 void	error_exit(char *message, int status);
 void	executor(t_command *commands, char **env);
+char	*get_env_value(char *name, char **env);
+char	*find_command_path(char *cmd, char **env);
+void	execute_pipes(t_command *commands, char **env);
 #endif
