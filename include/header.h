@@ -58,4 +58,5 @@ void	setup_signals(void);
 int	builtin_echo(char **argv);
 int	builtin_env(char **env);
 int	builtin_pwd(void);
+int	builtin_unset(char ***env, char **argv);
 #endif
