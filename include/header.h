@@ -52,4 +52,5 @@ void	executor(t_command *commands, char **env);
 char	*get_env_value(char *name, char **env);
 char	*find_command_path(char *cmd, char **env);
 void	execute_pipes(t_command *commands, char **env);
+int	apply_redirections(t_redir *redirections);
 #endif
