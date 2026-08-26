@@ -24,6 +24,7 @@ typedef struct s_token
 	t_token_type	type;
 	struct s_token	*next;
 }	t_token;
+extern int	g_signal_status;
 
 t_token	*lexer(char *line);
 t_token	*token_new(char *value, t_token_type type);
@@ -53,4 +54,6 @@ char	*get_env_value(char *name, char **env);
 char	*find_command_path(char *cmd, char **env);
 void	execute_pipes(t_command *commands, char **env);
 int	apply_redirections(t_redir *redirections);
+void	setup_signals(void);
+int	builtin_echo(char **argv);
 #endif
