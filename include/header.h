@@ -48,5 +48,5 @@ void	print_syntax_error(char *token);
 void	print_command_error(char *command);
 void	print_permission_error(char *command);
 void	error_exit(char *message, int status);
-
+void	executor(t_command *commands, char **env);
 #endif
