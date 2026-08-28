@@ -5,10 +5,11 @@ t_token	*token_new(char *value, t_token_type type)
 	t_token	*new;
 
 	new = malloc(sizeof(t_token));
-	if (new == NULL)
+	if (!new)
 		return (NULL);
 	new->value = value;
 	new->type = type;
+	new->quote = 0;
 	new->next = NULL;
 	return (new);
 }

@@ -25,50 +25,90 @@ static t_token_type	get_operator_type(char *line, int *length)
 	return (T_REDIR_OUT);
 }
 
-static int	find_word_end(char *line, int start)
+static int	find_word_end(char *line, int start, char *quote)
 {
 	int		i;
-	char	quote;
+	char	current_quote;
 
 	i = start;
-	quote = 0;
+	current_quote = 0;
+	*quote = 0;
 	while (line[i])
 	{
-		if (quote == 0 && (line[i] == '\'' || line[i] == '"'))
-			quote = line[i];
-		else if (quote != 0 && line[i] == quote)
-			quote = 0;
-		else if (quote == 0
+		if (!current_quote && (line[i] == '\'' || line[i] == '"'))
+		{
+			current_quote = line[i];
+			if (*quote == 0)
+				*quote = line[i];
+		}
+		else if (current_quote && line[i] == current_quote)
+			current_quote = 0;
+		else if (!current_quote
 			&& (ft_isspace(line[i]) || is_operator(line[i])))
 			break ;
 		i++;
 	}
-	if (quote != 0)
+	if (current_quote)
 		return (-1);
 	return (i);
+}
+
+static char	*remove_quotes(char *value)
+{
+	char	*result;
+	int		i;
+	int		j;
+	char	quote;
+
+	result = malloc(sizeof(char) * (ft_strlen(value) + 1));
+	if (!result)
+		return (NULL);
+	i = 0;
+	j = 0;
+	quote = 0;
+	while (value[i])
+	{
+		if (!quote && (value[i] == '\'' || value[i] == '"'))
+			quote = value[i];
+		else if (quote && value[i] == quote)
+			quote = 0;
+		else
+			result[j++] = value[i];
+		i++;
+	}
+	result[j] = '\0';
+	return (result);
 }
 
 static int	add_word_token(t_token **tokens, char *line, int *i)
 {
 	int		end;
 	char	*value;
+	char	*clean_value;
+	char	quote;
 	t_token	*new;
 
-	end = find_word_end(line, *i);
+	end = find_word_end(line, *i, &quote);
 	if (end == -1)
 	{
-		ft_putstr_fd("minishell: syntax error: unclosed quote\n", 2);
+		ft_putstr_fd(
+			"minishell: syntax error: unclosed quote\n", 2);
 		return (0);
 	}
 	value = ft_substr(line, *i, end - *i);
-	if (value == NULL)
+	if (!value)
 		return (0);
-	new = token_new(value, T_WORD);
-	if (new == NULL)
+	clean_value = remove_quotes(value);
+	free(value);
+	if (!clean_value)
+		return (0);
+	new = token_new(clean_value, T_WORD);
+	if (!new)
 	{
-		free(value);
+		free(clean_value);
 		return (0);
 	}
+	new->quote = quote;
 	token_add_back(tokens, new);
 	*i = end;
 	return (1);
@@ -83,14 +123,15 @@ static int	add_operator_token(t_token **tokens, char *line, int *i)
 
 	type = get_operator_type(&line[*i], &length);
 	value = ft_substr(line, *i, length);
-	if (value == NULL)
+	if (!value)
 		return (0);
 	new = token_new(value, type);
-	if (new == NULL)
+	if (!new)
 	{
 		free(value);
 		return (0);
 	}
+	new->quote = 0;
 	token_add_back(tokens, new);
 	*i += length;
 	return (1);
@@ -101,6 +142,8 @@ t_token	*lexer(char *line)
 	t_token	*tokens;
 	int		i;
 
+	if (!line)
+		return (NULL);
 	tokens = NULL;
 	i = 0;
 	while (line[i])
@@ -112,12 +155,18 @@ t_token	*lexer(char *line)
 		if (is_operator(line[i]))
 		{
 			if (!add_operator_token(&tokens, line, &i))
-				return (token_clear(&tokens), NULL);
+			{
+				token_clear(&tokens);
+				return (NULL);
+			}
 		}
 		else
 		{
 			if (!add_word_token(&tokens, line, &i))
-				return (token_clear(&tokens), NULL);
+			{
+				token_clear(&tokens);
+				return (NULL);
+			}
 		}
 	}
 	return (tokens);
