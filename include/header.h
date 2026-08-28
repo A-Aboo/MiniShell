@@ -128,19 +128,7 @@ void		error_exit(char *message, int status);
 
 
 /* String / character utilities */
-
-int			ft_isspace(char c);
-int			ft_isalpha(int c);
-int			ft_isalnum(int c);
-int			ft_strlen(char *str);
-char		*ft_strdup(char *s1);
-char		*ft_substr(char *s, int start, int len);
-int			ft_strcmp(char *s1, char *s2);
-int			ft_strncmp(char *s1, char *s2, int n);
-char		*ft_strjoin(char *s1, char *s2);
-char		*ft_strjoin_three(char *s1, char *s2, char *s3);
-char		*ft_strchr(char *s, int c);
-char		*ft_itoa(int n);
-int			ft_atoi(char *str);
-
+int	ft_isspace(char c);
+int	ft_strcmp(char *s1, char *s2);
+char	*ft_strjoin_three(char *s1, char *s2, char *s3);
 #endif
