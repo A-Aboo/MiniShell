@@ -13,8 +13,12 @@ char	*get_env_value(char *name, char **env)
 	while (env[i])
 	{
 		if (ft_strncmp(env[i], name, len) == 0
-			&& env[i][len] == '=')
-			return (env[i] + len + 1);
+			&& (env[i][len] == '=' || env[i][len] == '\0'))
+		{
+			if (env[i][len] == '=')
+				return (env[i] + len + 1);
+			return ("");
+		}
 		i++;
 	}
 	return (NULL);
@@ -107,7 +111,7 @@ int	find_env_index(char **env, char *name)
 	while (env[i])
 	{
 		if (ft_strncmp(env[i], name, len) == 0
-			&& env[i][len] == '=')
+			&& (env[i][len] == '=' || env[i][len] == '\0'))
 			return (i);
 		i++;
 	}

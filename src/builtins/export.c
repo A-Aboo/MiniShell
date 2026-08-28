@@ -16,28 +16,27 @@ static int	is_valid_name(char *str)
 			return (0);
 		i++;
 	}
-	if (str[i] == '+' && str[i + 1] != '=')
-		return (0);
+	if (str[i] == '+')
+	{
+		if (str[i + 1] != '=')
+			return (0);
+	}
 	return (1);
 }
 
 
 static char	*get_name(char *arg)
 {
-	int		i;
-	int		len;
-	char	*name;
+	int	i;
 
 	i = 0;
 	while (arg[i] && arg[i] != '=' && arg[i] != '+')
 		i++;
-	len = i;
-	name = ft_substr(arg, 0, len);
-	return (name);
+	return (ft_substr(arg, 0, i));
 }
 
 
-static char	*get_export_value(char *arg)
+static char	*get_value(char *arg)
 {
 	char	*equal;
 
@@ -69,73 +68,87 @@ static int	has_append(char *arg)
 }
 
 
-static char	*build_variable(char *name, char *value)
+static char	*make_variable(char *name, char *value)
 {
 	char	*tmp;
 	char	*result;
 
-	if (!value)
-		return (ft_strdup(name));
 	tmp = ft_strjoin(name, "=");
 	if (!tmp)
 		return (NULL);
+	if (!value)
+		value = "";
 	result = ft_strjoin(tmp, value);
 	free(tmp);
 	return (result);
 }
 
 
-static char	*build_append_variable(char *old_value,
-		char *name, char *new_value)
+static char	*make_append_variable(char *name, char *old_value,
+		char *new_value)
 {
 	char	*combined;
 	char	*result;
 
 	if (!old_value)
 		old_value = "";
+	if (!new_value)
+		new_value = "";
 	combined = ft_strjoin(old_value, new_value);
 	if (!combined)
 		return (NULL);
-	result = build_variable(name, combined);
+	result = make_variable(name, combined);
 	free(combined);
 	return (result);
 }
 
 
-static int	update_or_add(char ***env, char *name, char *arg)
+static int	set_variable(char ***env, char *name, char *arg)
 {
-	char	*variable;
-	char	*value;
-	char	*new_variable;
 	int		index;
-	int		result;
+	char	*new_variable;
+	char	*old_value;
 
-	value = get_export_value(arg);
 	index = find_env_index(*env, name);
 	if (has_append(arg))
 	{
+		old_value = NULL;
 		if (index >= 0 && ft_strchr((*env)[index], '='))
-			value = ft_strchr((*env)[index], '=') + 1;
-		new_variable = build_append_variable(value,
-				name, get_export_value(arg));
+			old_value = ft_strchr((*env)[index], '=') + 1;
+		new_variable = make_append_variable(
+				name, old_value, get_value(arg));
 	}
 	else
-		new_variable = build_variable(name, value);
+		new_variable = make_variable(name, get_value(arg));
 	if (!new_variable)
 		return (-1);
-	if (has_append(arg) && index >= 0)
-	{
-		result = update_env_variable(*env, new_variable);
-		free(new_variable);
-		return (result == -1 ? -1 : 0);
-	}
 	if (index >= 0)
 	{
-		result = update_env_variable(*env, new_variable);
+		if (update_env_variable(*env, new_variable) == -1)
+		{
+			free(new_variable);
+			return (-1);
+		}
 		free(new_variable);
-		return (result == -1 ? -1 : 0);
+		return (0);
 	}
 	*env = add_env_variable(*env, new_variable);
+	if (!*env)
+		return (-1);
+	return (0);
+}
+
+
+static int	add_empty_variable(char ***env, char *name)
+{
+	char	*variable;
+
+	if (find_env_index(*env, name) >= 0)
+		return (0);
+	variable = make_variable(name, NULL);
+	if (!variable)
+		return (-1);
+	*env = add_env_variable(*env, variable);
 	if (!*env)
 		return (-1);
 	return (0);
@@ -150,6 +163,14 @@ static int	export_cmp(char *a, char *b)
 	while (a[i] && b[i] && a[i] != '=' && b[i] != '='
 		&& a[i] == b[i])
 		i++;
+	if (a[i] == '=')
+	{
+		if (b[i] == '=')
+			return (0);
+		return (-1);
+	}
+	if (b[i] == '=')
+		return (1);
 	return ((unsigned char)a[i] - (unsigned char)b[i]);
 }
 
@@ -166,8 +187,10 @@ static void	print_export_line(char *variable)
 		ft_putstr_fd("\n", STDOUT_FILENO);
 		return ;
 	}
-	ft_putstr_fd(variable, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
+	write(STDOUT_FILENO, variable, equal - variable);
+	ft_putstr_fd("=\"", STDOUT_FILENO);
+	ft_putstr_fd(equal + 1, STDOUT_FILENO);
+	ft_putstr_fd("\"\n", STDOUT_FILENO);
 }
 
 
@@ -232,7 +255,8 @@ int	builtin_export(char ***env, char **argv)
 			ft_putstr_fd("minishell: export: `", STDERR_FILENO);
 			ft_putstr_fd(argv[i], STDERR_FILENO);
 			ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
-			return (1);
+			i++;
+			continue ;
 		}
 		name = get_name(argv[i]);
 		if (!name)
@@ -242,18 +266,14 @@ int	builtin_export(char ***env, char **argv)
 		}
 		if (!has_equal(argv[i]) && !has_append(argv[i]))
 		{
-			if (find_env_index(*env, name) == -1)
+			if (add_empty_variable(env, name) == -1)
 			{
-				*env = add_env_variable(*env, ft_strdup(name));
-				if (!*env)
-				{
-					free(name);
-					print_error("malloc failed");
-					return (1);
-				}
+				free(name);
+				print_error("malloc failed");
+				return (1);
 			}
 		}
-		else if (update_or_add(env, name, argv[i]) == -1)
+		else if (set_variable(env, name, argv[i]) == -1)
 		{
 			free(name);
 			print_error("malloc failed");

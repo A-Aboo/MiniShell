@@ -74,12 +74,14 @@ static void	restore_stdio(int saved_in, int saved_out)
 {
 	if (saved_in != -1)
 	{
-		dup2(saved_in, STDIN_FILENO);
+		if (dup2(saved_in, STDIN_FILENO) == -1)
+			print_error("dup2 failed");
 		close(saved_in);
 	}
 	if (saved_out != -1)
 	{
-		dup2(saved_out, STDOUT_FILENO);
+		if (dup2(saved_out, STDOUT_FILENO) == -1)
+			print_error("dup2 failed");
 		close(saved_out);
 	}
 }
@@ -116,6 +118,7 @@ static void	execute_external_child(t_command *cmd, char **env)
 {
 	char	*path;
 
+	setup_child_signals();
 	if (apply_redirections(cmd->redirections) == -1)
 		exit(1);
 	path = find_command_path(cmd->argv[0], env);
@@ -176,10 +179,7 @@ int	executor(t_command *commands, char ***env)
 		return (0);
 	cmd = commands;
 	if (cmd->next)
-	{
-		execute_pipes(commands, *env);
-		return (0);
-	}
+		return (execute_pipes(commands, *env));
 	if (!cmd->argv || !cmd->argv[0])
 	{
 		if (apply_redirections(cmd->redirections) == -1)
