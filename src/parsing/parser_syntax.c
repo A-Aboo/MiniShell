@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   string_utils.c                                     :+:      :+:    :+:   */
+/*   parser_syntax.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: anasimi <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,34 +12,49 @@
 
 #include "header.h"
 
-int	ft_isspace(char c)
+/* A pipe needs a command on both sides, a redirection needs a word. */
+
+static int	check_token(t_token *token)
 {
-	return (c == ' ' || c == '\t' || c == '\n'
-		|| c == '\v' || c == '\f' || c == '\r');
+	t_token	*next;
+
+	next = token->next;
+	if (token->type == T_PIPE)
+	{
+		if (!next || next->type == T_PIPE)
+		{
+			print_syntax_error("|");
+			return (0);
+		}
+	}
+	else if (is_redirection(token->type))
+	{
+		if (!next)
+		{
+			print_syntax_error("newline");
+			return (0);
+		}
+		if (next->type != T_WORD)
+		{
+			print_syntax_error(next->value);
+			return (0);
+		}
+	}
+	return (1);
 }
 
-int	ft_strcmp(char *s1, char *s2)
+int	check_syntax(t_token *tokens)
 {
-	int	i;
-
-	if (!s1 || !s2)
-		return (1);
-	i = 0;
-	while (s1[i] && s2[i] && s1[i] == s2[i])
-		i++;
-	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
-}
-
-/* Appends to a string it takes ownership of, so that a chain of joins
-   stays readable and a failure anywhere propagates as NULL. */
-
-char	*append_free(char *str, char *suffix)
-{
-	char	*result;
-
-	if (!str)
-		return (NULL);
-	result = ft_strjoin(str, suffix);
-	free(str);
-	return (result);
+	if (tokens && tokens->type == T_PIPE)
+	{
+		print_syntax_error("|");
+		return (0);
+	}
+	while (tokens)
+	{
+		if (!check_token(tokens))
+			return (0);
+		tokens = tokens->next;
+	}
+	return (1);
 }

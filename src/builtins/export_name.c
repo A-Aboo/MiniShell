@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   string_utils.c                                     :+:      :+:    :+:   */
+/*   export_name.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: anasimi <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,34 +12,64 @@
 
 #include "header.h"
 
-int	ft_isspace(char c)
-{
-	return (c == ' ' || c == '\t' || c == '\n'
-		|| c == '\v' || c == '\f' || c == '\r');
-}
-
-int	ft_strcmp(char *s1, char *s2)
+int	is_valid_name(char *str)
 {
 	int	i;
 
-	if (!s1 || !s2)
-		return (1);
-	i = 0;
-	while (s1[i] && s2[i] && s1[i] == s2[i])
+	if (!str || !str[0])
+		return (0);
+	if (!ft_isalpha(str[0]) && str[0] != '_')
+		return (0);
+	i = 1;
+	while (str[i] && str[i] != '=' && str[i] != '+')
+	{
+		if (!ft_isalnum(str[i]) && str[i] != '_')
+			return (0);
 		i++;
-	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+	}
+	if (str[i] == '+')
+	{
+		if (str[i + 1] != '=')
+			return (0);
+	}
+	return (1);
 }
 
-/* Appends to a string it takes ownership of, so that a chain of joins
-   stays readable and a failure anywhere propagates as NULL. */
-
-char	*append_free(char *str, char *suffix)
+char	*get_name(char *arg)
 {
-	char	*result;
+	int	i;
 
-	if (!str)
+	i = 0;
+	while (arg[i] && arg[i] != '=' && arg[i] != '+')
+		i++;
+	return (ft_substr(arg, 0, i));
+}
+
+char	*get_value(char *arg)
+{
+	char	*equal;
+
+	equal = ft_strchr(arg, '=');
+	if (!equal)
 		return (NULL);
-	result = ft_strjoin(str, suffix);
-	free(str);
-	return (result);
+	return (equal + 1);
+}
+
+int	has_equal(char *arg)
+{
+	return (ft_strchr(arg, '=') != NULL);
+}
+
+int	has_append(char *arg)
+{
+	int	i;
+
+	i = 0;
+	while (arg[i] && arg[i] != '=')
+	{
+		if (arg[i] == '+')
+			return (1);
+		i++;
+	}
+	return (0);
 }

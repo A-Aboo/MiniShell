@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   string_utils.c                                     :+:      :+:    :+:   */
+/*   signals_heredoc.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: anasimi <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,34 +12,18 @@
 
 #include "header.h"
 
-int	ft_isspace(char c)
+/* Here-document: closing the input makes readline return NULL, which
+   is how the pending here-document gets cancelled. */
+
+static void	heredoc_handler(int signal)
 {
-	return (c == ' ' || c == '\t' || c == '\n'
-		|| c == '\v' || c == '\f' || c == '\r');
+	g_signal_status = signal;
+	write(STDOUT_FILENO, "\n", 1);
+	close(STDIN_FILENO);
 }
 
-int	ft_strcmp(char *s1, char *s2)
+void	setup_heredoc_signals(void)
 {
-	int	i;
-
-	if (!s1 || !s2)
-		return (1);
-	i = 0;
-	while (s1[i] && s2[i] && s1[i] == s2[i])
-		i++;
-	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
-}
-
-/* Appends to a string it takes ownership of, so that a chain of joins
-   stays readable and a failure anywhere propagates as NULL. */
-
-char	*append_free(char *str, char *suffix)
-{
-	char	*result;
-
-	if (!str)
-		return (NULL);
-	result = ft_strjoin(str, suffix);
-	free(str);
-	return (result);
+	signal(SIGINT, heredoc_handler);
+	signal(SIGQUIT, SIG_IGN);
 }

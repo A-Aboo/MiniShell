@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   string_utils.c                                     :+:      :+:    :+:   */
+/*   output_utils.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: anasimi <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,34 +12,35 @@
 
 #include "header.h"
 
-int	ft_isspace(char c)
+/* Writes a whole string to stdout, resuming after a partial write.
+   Returns -1 when the write really failed, which happens when the
+   reader of a pipe is gone and SIGPIPE is being ignored. */
+
+int	write_out(char *str)
 {
-	return (c == ' ' || c == '\t' || c == '\n'
-		|| c == '\v' || c == '\f' || c == '\r');
+	int	len;
+	int	sent;
+	int	written;
+
+	len = ft_strlen(str);
+	sent = 0;
+	while (sent < len)
+	{
+		written = write(STDOUT_FILENO, str + sent, len - sent);
+		if (written <= 0)
+			return (-1);
+		sent += written;
+	}
+	return (0);
 }
 
-int	ft_strcmp(char *s1, char *s2)
+/* A builtin whose output could not be written says so, like bash. */
+
+int	write_error(char *builtin)
 {
-	int	i;
-
-	if (!s1 || !s2)
-		return (1);
-	i = 0;
-	while (s1[i] && s2[i] && s1[i] == s2[i])
-		i++;
-	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
-}
-
-/* Appends to a string it takes ownership of, so that a chain of joins
-   stays readable and a failure anywhere propagates as NULL. */
-
-char	*append_free(char *str, char *suffix)
-{
-	char	*result;
-
-	if (!str)
-		return (NULL);
-	result = ft_strjoin(str, suffix);
-	free(str);
-	return (result);
+	ft_putstr_fd("minishell: ", STDERR_FILENO);
+	ft_putstr_fd(builtin, STDERR_FILENO);
+	ft_putstr_fd(": write error: ", STDERR_FILENO);
+	ft_putendl_fd(strerror(errno), STDERR_FILENO);
+	return (1);
 }

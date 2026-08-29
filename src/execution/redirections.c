@@ -1,9 +1,21 @@
-#include "header.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   redirections.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: anasimi <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/08/29 12:00:00 by anasimi           #+#    #+#             */
+/*   Updated: 2026/08/29 12:00:00 by anasimi          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
+#include "header.h"
 
 static int	open_redirection(t_redir *redir)
 {
-	int	fd;
+	int		fd;
+	char	*message;
 
 	fd = -1;
 	if (redir->type == T_REDIR_IN)
@@ -16,46 +28,15 @@ static int	open_redirection(t_redir *redir)
 				O_WRONLY | O_CREAT | O_APPEND, 0644);
 	if (fd == -1)
 	{
-		perror(redir->filename);
-		return (-1);
+		message = ft_strjoin("minishell: ", redir->filename);
+		if (!message)
+			message = redir->filename;
+		perror(message);
+		if (message != redir->filename)
+			free(message);
 	}
 	return (fd);
 }
-
-
-static int	create_heredoc(char *delimiter)
-{
-	int		pipe_fd[2];
-	char	*line;
-
-	if (pipe(pipe_fd) == -1)
-	{
-		print_error("pipe failed");
-		return (-1);
-	}
-	while (1)
-	{
-		line = readline("> ");
-		if (!line)
-		{
-			ft_putstr_fd(
-				"minishell: warning: here-document delimited by end-of-file\n",
-				STDERR_FILENO);
-			break ;
-		}
-		if (ft_strcmp(line, delimiter) == 0)
-		{
-			free(line);
-			break ;
-		}
-		ft_putstr_fd(line, pipe_fd[1]);
-		ft_putstr_fd("\n", pipe_fd[1]);
-		free(line);
-	}
-	close(pipe_fd[1]);
-	return (pipe_fd[0]);
-}
-
 
 static int	apply_fd(int fd, int type)
 {
@@ -81,7 +62,6 @@ static int	apply_fd(int fd, int type)
 	return (0);
 }
 
-
 int	apply_redirections(t_redir *redirections)
 {
 	int	fd;
@@ -89,7 +69,10 @@ int	apply_redirections(t_redir *redirections)
 	while (redirections)
 	{
 		if (redirections->type == T_HEREDOC)
-			fd = create_heredoc(redirections->filename);
+		{
+			fd = redirections->heredoc_fd;
+			redirections->heredoc_fd = -1;
+		}
 		else
 			fd = open_redirection(redirections);
 		if (fd == -1)
@@ -99,4 +82,28 @@ int	apply_redirections(t_redir *redirections)
 		redirections = redirections->next;
 	}
 	return (0);
-}	
+}
+
+int	collect_heredocs(t_command *commands, char **env, int status)
+{
+	int	saved_stdin;
+	int	ok;
+
+	saved_stdin = dup(STDIN_FILENO);
+	if (saved_stdin == -1)
+	{
+		print_error("dup failed");
+		return (0);
+	}
+	setup_heredoc_signals();
+	ok = 1;
+	while (commands && ok)
+	{
+		ok = collect_in_command(commands, env, status);
+		commands = commands->next;
+	}
+	setup_signals();
+	dup2(saved_stdin, STDIN_FILENO);
+	close(saved_stdin);
+	return (ok);
+}

@@ -1,24 +1,35 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pwd.c                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: anasimi <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/08/29 12:00:00 by anasimi           #+#    #+#             */
+/*   Updated: 2026/08/29 12:00:00 by anasimi          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "header.h"
 
+/* Arguments are ignored, the way bash ignores operands given to pwd. */
 
-int	builtin_pwd(char **argv)
+int	builtin_pwd(char **argv, char **env)
 {
 	char	*path;
 
-	if (argv && argv[1])
-	{
-		ft_putstr_fd("minishell: pwd: too many arguments\n",
-			STDERR_FILENO);
-		return (1);
-	}
-	path = getcwd(NULL, 0);
+	(void)argv;
+	path = current_pwd(env);
 	if (!path)
 	{
-		perror("minishell: pwd");
+		print_perror("pwd");
 		return (1);
 	}
-	ft_putstr_fd(path, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
+	if (write_out(path) == -1 || write_out("\n") == -1)
+	{
+		free(path);
+		return (write_error("pwd"));
+	}
 	free(path);
 	return (0);
 }

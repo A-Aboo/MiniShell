@@ -1,5 +1,16 @@
-#include "header.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   unset.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: anasimi <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/08/29 12:00:00 by anasimi           #+#    #+#             */
+/*   Updated: 2026/08/29 12:00:00 by anasimi          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
+#include "header.h"
 
 static int	is_valid_identifier(char *name)
 {
@@ -19,32 +30,27 @@ static int	is_valid_identifier(char *name)
 	return (1);
 }
 
+/* A name that is not an identifier can never have been set, so bash
+   just skips it. Checking still matters: "a=b" would otherwise be
+   matched against the variable "a" and remove it. */
 
 int	builtin_unset(char ***env, char **argv)
 {
-	int		i;
 	char	**new_env;
+	int		i;
 
 	if (!env || !*env || !argv)
 		return (1);
 	i = 1;
 	while (argv[i])
 	{
-		if (!is_valid_identifier(argv[i]))
+		if (is_valid_identifier(argv[i]))
 		{
-			ft_putstr_fd("minishell: unset: `", STDERR_FILENO);
-			ft_putstr_fd(argv[i], STDERR_FILENO);
-			ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
-			i++;
-			continue ;
+			new_env = remove_env_variable(*env, argv[i]);
+			if (!new_env)
+				return (print_builtin_error("unset", NULL, "malloc failed"));
+			*env = new_env;
 		}
-		new_env = remove_env_variable(*env, argv[i]);
-		if (!new_env)
-		{
-			print_error("malloc failed");
-			return (1);
-		}
-		*env = new_env;
 		i++;
 	}
 	return (0);
