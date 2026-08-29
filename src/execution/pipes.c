@@ -30,7 +30,7 @@ static int	run_builtin(t_command *cmd, char **env)
 	if (ft_strcmp(cmd->argv[0], "cd") == 0)
 		return (builtin_cd(cmd->argv, env));
 	if (ft_strcmp(cmd->argv[0], "pwd") == 0)
-		return (builtin_pwd());
+		return (builtin_pwd(cmd->argv));
 	if (ft_strcmp(cmd->argv[0], "export") == 0)
 		return (builtin_export(&env, cmd->argv));
 	if (ft_strcmp(cmd->argv[0], "unset") == 0)
