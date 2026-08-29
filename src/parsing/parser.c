@@ -68,20 +68,24 @@ static int	count_words(t_token *tokens)
 
 static int	fill_command(t_command *cmd, t_token **tokens)
 {
-	int			i;
-	int			word_count;
-	t_token		*current;
+	int				i;
+	int				word_count;
+	t_token			*current;
 	t_token_type	redir_type;
-	t_redir		*redir;
+	t_redir			*redir;
 
 	word_count = count_words(*tokens);
 	if (word_count < 0)
 		return (0);
-
 	cmd->argv = malloc(sizeof(char *) * (word_count + 1));
 	if (!cmd->argv)
 		return (0);
-
+	i = 0;
+	while (i <= word_count)
+	{
+		cmd->argv[i] = NULL;
+		i++;
+	}
 	i = 0;
 	current = *tokens;
 	while (current && current->type != T_PIPE)
@@ -106,7 +110,6 @@ static int	fill_command(t_command *cmd, t_token **tokens)
 		}
 		current = current->next;
 	}
-	cmd->argv[i] = NULL;
 	*tokens = current;
 	return (1);
 }
@@ -205,12 +208,13 @@ t_command	*parser(t_token *tokens)
 			free_commands(commands);
 			return (NULL);
 		}
-		command_add_back(&commands, cmd);
 		if (!fill_command(cmd, &tokens))
 		{
+			free_commands(cmd);
 			free_commands(commands);
 			return (NULL);
 		}
+		command_add_back(&commands, cmd);
 		if (tokens && tokens->type == T_PIPE)
 			tokens = tokens->next;
 	}
